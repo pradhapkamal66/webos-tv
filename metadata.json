@@ -1,0 +1,7 @@
+{
+  "name": "StreamGlass TV",
+  "description": "LG webOS TV streaming media player with advanced MKV, multi-audio, subtitle track detection and TV remote navigation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "entities": {
+    "User": {
+      "collection": "users",
+      "fields": {
+        "id": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "photoURL": { "type": "string", "description": "Google profile photo URL" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      }
+    },
+    "Video": {
+      "collection": "videos",
+      "fields": {
+        "id": { "type": "string", "description": "Unique video ID" },
+        "userId": { "type": "string", "description": "Owner Google UID or 'demo'" },
+        "name": { "type": "string", "description": "Video or Movie title" },
+        "streamUrl": { "type": "string", "description": "Full playback URL with tokens" },
+        "posterUrl": { "type": "string", "description": "Cover/poster image URL or data URI" },
+        "container": { "type": "string", "description": "Container format (mp4, mkv, m3u8, ts, etc.)" },
+        "category": { "type": "string", "description": "Category or genre" },
+        "year": { "type": "string", "description": "Release year" },
+        "videoInfo": { "type": "map", "description": "Video resolution, codec, bitrate" },
+        "audioTracks": { "type": "list", "description": "Audio streams array" },
+        "subtitleTracks": { "type": "list", "description": "Subtitle streams array" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp" }
+      }
+    }
+  }
+}

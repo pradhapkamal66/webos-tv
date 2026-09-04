@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080, user-scalable=no">
+  <title>StreamGlass TV</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: #08090c;
+      color: #f1f3f7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+    #video-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1080px;
+      background: #000;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    /* Glassmorphism panels */
+    .glass-panel {
+      background: rgba(18, 21, 29, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+    .focusable {
+      outline: none;
+      transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+      cursor: pointer;
+    }
+    .focusable:focus, .focusable.focused {
+      outline: none;
+      border-color: #60a5fa !important;
+      box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.45), 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+      transform: scale(1.02);
+      background: rgba(45, 55, 72, 0.8) !important;
+    }
+    /* Top Header Bar */
+    #top-bar {
+      position: absolute;
+      top: 40px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+      transition: opacity 0.3s ease;
+    }
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .badge-tag {
+      background: rgba(96, 165, 250, 0.2);
+      color: #93c5fd;
+      border: 1px solid rgba(96, 165, 250, 0.4);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    /* Bottom Controls */
+    #bottom-overlay {
+      position: absolute;
+      bottom: 40px;
+      left: 60px;
+      right: 60px;
+      padding: 30px 40px;
+      z-index: 20;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: #3b82f6;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .media-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .movie-title {
+      font-size: 34px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .movie-meta-tags {
+      display: flex;
+      gap: 10px;
+      font-size: 15px;
+      color: #cbd5e1;
+    }
+    .pill {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 14px;
+    }
+    .tv-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    /* Audio & Subtitle Glass Drawers */
+    .menu-drawer {
+      position: absolute;
+      top: 140px;
+      right: 60px;
+      width: 440px;
+      max-height: 800px;
+      padding: 28px;
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+    }
+    .drawer-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #94a3b8;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .track-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+    .track-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .track-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .indicator-radio {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #94a3b8;
+    }
+    .indicator-radio.active {
+      background: #3b82f6;
+      border-color: #60a5fa;
+      box-shadow: 0 0 10px #3b82f6;
+    }
+    .track-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .track-details {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .notice-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #fcd34d;
+    }
+    /* Info Toast */
+    #status-toast {
+      position: absolute;
+      top: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 28px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #e2e8f0;
+      z-index: 40;
+      display: none;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div id="video-container">
+    <video id="tv-video" playsinline webkit-playsinline></video>
+  </div>
+
+  <div id="status-toast"></div>
+
+  <!-- Top Bar -->
+  <div id="top-bar">
+    <div class="logo-badge">
+      <span>StreamGlass TV</span>
+      <span class="badge-tag">LG webOS 1080p</span>
+      <span id="container-badge" class="badge-tag" style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4);">MKV</span>
+    </div>
+    <div class="btn-group">
+      <button id="btn-audio" class="tv-btn focusable" tabindex="1">Audio (A / Red)</button>
+      <button id="btn-subtitles" class="tv-btn focusable" tabindex="2">Subtitles (S / Green)</button>
+      <button id="btn-info" class="tv-btn focusable" tabindex="3">Info (I)</button>
+      <button id="btn-diagnostics" class="tv-btn focusable" tabindex="4">Diagnostics</button>
+    </div>
+  </div>
+
+  <!-- Bottom Player Overlay -->
+  <div id="bottom-overlay" class="glass-panel">
+    <div class="progress-bar-container">
+      <div id="progress-fill" class="progress-bar-fill"></div>
+    </div>
+    <div class="media-info-row">
+      <div>
+        <h1 id="ui-title" class="movie-title">GANDHARI</h1>
+        <div class="movie-meta-tags">
+          <span class="pill" id="ui-res">1080p</span>
+          <span class="pill" id="ui-codec">H.264 / AVC</span>
+          <span class="pill" id="ui-container">MKV</span>
+          <span class="pill" id="ui-audio-label">Audio: Tamil 5.1</span>
+          <span class="pill" id="ui-sub-label">Subtitles: English</span>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button id="btn-play-pause" class="tv-btn focusable" tabindex="5">Play / Pause</button>
+        <button id="btn-seek-back" class="tv-btn focusable" tabindex="6">◀◀ 10s</button>
+        <button id="btn-seek-fwd" class="tv-btn focusable" tabindex="7">10s ▶▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Selector Drawer -->
+  <div id="drawer-audio" class="glass-panel menu-drawer">
+    <div class="drawer-title">AUDIO</div>
+    <div id="audio-track-list" class="track-list"></div>
+    <div id="audio-notice" class="notice-box" style="display: none;"></div>
+  </div>
+
+  <!-- Subtitle Selector Drawer -->
+  <div id="drawer-subtitles" class="glass-panel menu-drawer">
+    <div class="drawer-title">SUBTITLES</div>
+    <div id="subtitle-track-list" class="track-list"></div>
+    <div id="subtitle-notice" class="notice-box" style="display: none;"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/mediaDetector.js"></script>
+  <script src="js/mediaCapability.js"></script>
+  <script src="js/mediaMetadata.js"></script>
+  <script src="js/audioTracks.js"></script>
+  <script src="js/subtitles.js"></script>
+  <script src="js/webos.js"></script>
+  <script src="js/diagnostics.js"></script>
+
+  <script>
+    (function () {
+      var video = document.getElementById('tv-video');
+      var audioMgr = new AudioTracks.AudioTrackManager(video);
+      var subMgr = new Subtitles.SubtitleManager(video);
+      var currentMovie = {
+        name: 'GANDHARI',
+        streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        container: 'mkv',
+        mimeType: 'video/x-matroska',
+        videoInfo: { codec: 'H.264 / AVC', width: 1920, height: 1080, frameRate: 24 },
+        audioTracks: [
+          { id: '0', language: 'ta', label: 'Tamil', codec: 'AAC', channels: '5.1', default: true, source: 'metadata' },
+          { id: '1', language: 'te', label: 'Telugu', codec: 'AAC', channels: '5.1', default: false, source: 'metadata' },
+          { id: '2', language: 'hi', label: 'Hindi', codec: 'AC3', channels: '5.1', default: false, source: 'metadata' }
+        ],
+        subtitleTracks: [
+          { id: '0', language: 'en', label: 'English', embedded: true, default: false, source: 'metadata' },
+          { id: '1', language: 'ta', label: 'Tamil', embedded: true, default: false, source: 'metadata' }
+        ]
+      };
+
+      function showToast(msg) {
+        var toast = document.getElementById('status-toast');
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(function () {
+          toast.style.display = 'none';
+        }, 3500);
+      }
+
+      function updateProgress() {
+        if (video.duration) {
+          var pct = (video.currentTime / video.duration) * 100;
+          document.getElementById('progress-fill').style.width = pct + '%';
+        }
+      }
+
+      video.addEventListener('timeupdate', updateProgress);
+
+      // Playback errors
+      video.addEventListener('error', function () {
+        showToast('Playback error: container or codec may not be supported by this LG TV model.');
+      });
+
+      // Spatial Remote Navigation
+      window.addEventListener('keydown', function (e) {
+        var action = WebOSBridge.mapKeyEventToAction(e);
+        if (!action) return;
+
+        if (action === 'PLAY_PAUSE') {
+          if (video.paused) video.play(); else video.pause();
+        } else if (action === 'FAST_FORWARD' || (action === 'RIGHT' && document.activeElement === document.body)) {
+          video.currentTime += 10;
+        } else if (action === 'REWIND' || (action === 'LEFT' && document.activeElement === document.body)) {
+          video.currentTime = Math.max(0, video.currentTime - 10);
+        } else if (action === 'AUDIO_MENU') {
+          toggleDrawer('drawer-audio');
+        } else if (action === 'SUBTITLE_MENU') {
+          toggleDrawer('drawer-subtitles');
+        } else if (action === 'BACK') {
+          closeAllDrawers();
+        }
+      });
+
+      function closeAllDrawers() {
+        document.getElementById('drawer-audio').style.display = 'none';
+        document.getElementById('drawer-subtitles').style.display = 'none';
+      }
+
+      function toggleDrawer(id) {
+        var el = document.getElementById(id);
+        var isVisible = el.style.display === 'flex';
+        closeAllDrawers();
+        if (!isVisible) {
+          el.style.display = 'flex';
+          renderDrawerTracks(id);
+        }
+      }
+
+      function renderDrawerTracks(id) {
+        if (id === 'drawer-audio') {
+          var container = document.getElementById('audio-track-list');
+          container.innerHTML = '';
+          var tracks = audioMgr.refreshTracks(currentMovie);
+          tracks.forEach(function (t) {
+            var row = document.createElement('button');
+            row.className = 'track-row focusable';
+            row.innerHTML = '<div class="track-left"><span class="indicator-radio ' + (t.selected ? 'active' : '') + '"></span><div><div class="track-name">' + t.label + '</div><div class="track-details">' + (t.codec || 'AAC') + ' • ' + (t.channels || '2.0') + '</div></div></div>';
+            row.onclick = function () {
+              var res = audioMgr.selectAudioTrack(t.id);
+              showToast(res.message);
+              renderDrawerTracks('drawer-audio');
+            };
+            container.appendChild(row);
+          });
+          var notice = document.getElementById('audio-notice');
+          if (audioMgr.statusMessage) {
+            notice.innerText = audioMgr.statusMessage;
+            notice.style.display = 'block';
+          } else {
+            notice.style.display = 'none';
+          }
+        } else if (id === 'drawer-subtitles') {
+          var subContainer = document.getElementById('subtitle-track-list');
+          subContainer.innerHTML = '';
+          var subTracks = subMgr.refreshTracks(currentMovie);
+          subTracks.forEach(function (s) {
+            var srow = document.createElement('button');
+            srow.className = 'track-row focusable';
+            srow.innerHTML = '<div class="track-left"><span class="indicator-radio ' + (s.selected ? 'active' : '') + '"></span><div><div class="track-name">' + s.label + '</div><div class="track-details">' + (s.source === 'external' ? 'External WebVTT' : (s.embedded ? 'Embedded' : '')) + '</div></div></div>';
+            srow.onclick = function () {
+              var sres = subMgr.selectSubtitleTrack(s.id);
+              showToast(sres.message);
+              renderDrawerTracks('drawer-subtitles');
+            };
+            subContainer.appendChild(srow);
+          });
+          var snotice = document.getElementById('subtitle-notice');
+          if (subMgr.statusMessage) {
+            snotice.innerText = subMgr.statusMessage;
+            snotice.style.display = 'block';
+          } else {
+            snotice.style.display = 'none';
+          }
+        }
+      }
+
+      document.getElementById('btn-audio').onclick = function () { toggleDrawer('drawer-audio'); };
+      document.getElementById('btn-subtitles').onclick = function () { toggleDrawer('drawer-subtitles'); };
+      document.getElementById('btn-play-pause').onclick = function () { if (video.paused) video.play(); else video.pause(); };
+      document.getElementById('btn-seek-back').onclick = function () { video.currentTime = Math.max(0, video.currentTime - 10); };
+      document.getElementById('btn-seek-fwd').onclick = function () { video.currentTime += 10; };
+
+      // Set sample video for immediate preview
+      video.src = currentMovie.streamUrl;
+      video.load();
+    })();
+  </script>
+</body>
+</html>

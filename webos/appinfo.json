@@ -1,0 +1,21 @@
+{
+  "id": "com.streamglasstv.player",
+  "version": "1.0.0",
+  "vendor": "StreamGlass TV",
+  "type": "web",
+  "main": "index.html",
+  "title": "StreamGlass TV",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "resolution": "1920x1080",
+  "requiredPermissions": [
+    "media.audio",
+    "media.video"
+  ],
+  "accessibility": {
+    "supportsAudioGuidance": true
+  },
+  "supportGpu": true,
+  "bgColor": "#0a0a0c",
+  "handlesRelaunch": true
+}
